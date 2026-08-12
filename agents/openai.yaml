@@ -1,0 +1,4 @@
+interface:
+  display_name: "前端需求安全实现"
+  short_description: "复用优先、范围受控地实现已有前端仓库需求"
+  default_prompt: "使用 $front-skill 在已有前端仓库中分析并实现这个需求；如有设计链接请读取实际设计，优先复用现有组件，严格控制范围并完成验证。"
