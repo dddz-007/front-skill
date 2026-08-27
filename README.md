@@ -40,22 +40,131 @@ front-skill/
 
 完整规则见 [SKILL.md](SKILL.md)。
 
+## 平台兼容性
+
+本仓库遵循 Agent Skills 的通用目录格式：`SKILL.md` 是入口，`references/` 按需提供详细工作流。无需为不同平台维护多份 Skill 内容；只需将整个仓库放入对应平台的 Skill 目录。
+
+| 平台 | 项目级目录 | 用户级目录 | 手动调用 |
+|------|------------|------------|----------|
+| Codex | `.agents/skills/front-skill/` | `~/.agents/skills/front-skill/` | `$front-skill` |
+| Claude Code | `.claude/skills/front-skill/` | `~/.claude/skills/front-skill/` | `/front-skill` |
+| OpenCode | `.opencode/skills/front-skill/` | `~/.config/opencode/skills/front-skill/` | 在提示词中点名 `front-skill`，由 Agent 调用 `skill` 工具加载 |
+| Cursor | `.cursor/skills/front-skill/` | `~/.cursor/skills/front-skill/` | `/front-skill` |
+| Qoder | `.qoder/skills/front-skill/` | `~/.qoder/skills/front-skill/` | `/front-skill` |
+
+> OpenCode 也兼容 `.agents/skills/` 和 `.claude/skills/`；Cursor 也兼容 `.agents/skills/`、`.claude/skills/` 和 `.codex/skills/`。如果同一项目需要同时支持 Codex、OpenCode 和 Cursor，可只保留一份 `.agents/skills/front-skill/`。Claude Code 和 Qoder 仍应使用各自的原生目录，或通过目录链接指向同一份 Skill。
+
 ## 安装
 
-将本仓库克隆或复制到 Cursor Skills 目录，例如：
+### 安装到用户目录
 
-```text
-~/.cursor/skills/front-skill/
+将仓库克隆到所用平台的用户级目录。以下命令任选其一：
+
+```bash
+# Codex
+git clone https://github.com/dddz-007/front-skill.git ~/.agents/skills/front-skill
+
+# Claude Code
+git clone https://github.com/dddz-007/front-skill.git ~/.claude/skills/front-skill
+
+# OpenCode
+git clone https://github.com/dddz-007/front-skill.git ~/.config/opencode/skills/front-skill
+
+# Cursor
+git clone https://github.com/dddz-007/front-skill.git ~/.cursor/skills/front-skill
+
+# Qoder
+git clone https://github.com/dddz-007/front-skill.git ~/.qoder/skills/front-skill
 ```
 
-或在 Cursor 设置中通过 Skill 路径引用本仓库。
+用户级安装会让 Skill 对本机的所有项目生效。目标父目录不存在时，请先创建父目录。
 
-## 如何使用
+### 安装到项目目录
+
+如果只希望在当前项目中使用，请将本仓库的完整内容复制到上表对应的项目级目录。目录中必须保留 `SKILL.md`、`references/`；`agents/openai.yaml` 是 Codex 的可选界面元数据，其他平台会忽略它。
+
+以 Codex、OpenCode、Cursor 共用目录为例：
+
+```text
+your-project/
+└── .agents/
+    └── skills/
+        └── front-skill/
+            ├── SKILL.md
+            ├── agents/
+            │   └── openai.yaml
+            └── references/
+                ├── feature-workflow.md
+                ├── surgical-change.md
+                ├── ui-figma.md
+                └── validation.md
+```
+
+安装后如未出现在 Skill 列表中，请重启对应客户端，并确认目录名为 `front-skill`、入口文件名严格为大写 `SKILL.md`。
+
+平台约定可参考官方文档：[Codex](https://learn.chatgpt.com/docs/build-skills)、[Claude Code](https://code.claude.com/docs/en/skills)、[OpenCode](https://opencode.ai/docs/skills/)、[Cursor](https://cursor.com/docs/skills)、[Qoder](https://docs.qoder.com/extensions/skills)。
+
+## 各平台如何使用
+
+### Codex
+
+在 Codex CLI 或 IDE 扩展中输入 `$` 选择 Skill，或直接在提示词中调用：
+
+```text
+$front-skill 完成下面的前端需求：
+[需求内容、Figma 链接或截图]
+```
+
+Codex 也会在任务与 `description` 匹配时自动加载该 Skill。
+
+### Claude Code
+
+```text
+/front-skill 完成下面的前端需求：
+[需求内容、Figma 链接或截图]
+```
+
+Claude Code 也可以根据 Skill 描述自动调用。
+
+### OpenCode
+
+OpenCode 将可用 Skill 暴露给 Agent，由 Agent 通过内置 `skill` 工具加载。直接描述需求并点名 Skill 即可：
+
+```text
+使用 front-skill 完成下面的前端需求：
+[需求内容、Figma 链接或截图]
+```
+
+也可以只描述前端任务，让 OpenCode 根据 `description` 自动选择。普通 Agent Skill 不等同于 OpenCode 的自定义斜杠命令，因此不把 `/front-skill` 作为通用调用方式。
+
+### Cursor
+
+在 Agent 聊天中输入 `/` 并选择 `front-skill`，或直接输入：
+
+```text
+/front-skill 完成下面的前端需求：
+[需求内容、Figma 链接或截图]
+```
+
+Cursor 也会在上下文匹配时自动应用该 Skill。
+
+### Qoder
+
+在 IDE 聊天、Quest 或 CLI 中调用：
+
+```text
+/front-skill 完成下面的前端需求：
+[需求内容、Figma 链接或截图]
+```
+
+Qoder 也支持根据请求和 Skill 描述自动触发。
+
+## 使用示例
 
 ### 普通前端需求
 
 ```text
-使用 $front-skill 完成下面的需求：
+调用当前平台中的 front-skill 完成下面的需求：
 
 [需求内容]
 [UI/Figma 链接或截图]
@@ -64,7 +173,7 @@ front-skill/
 ### 只调查，不修改
 
 ```text
-使用 $front-skill 分析下面的需求。
+调用当前平台中的 front-skill 分析下面的需求。
 本轮只调查入口、已有实现和设计，输出实施合同，不修改代码。
 
 [需求内容]
@@ -74,7 +183,7 @@ front-skill/
 ### 按实施合同执行
 
 ```text
-使用 $front-skill 执行下面的实施合同。
+调用当前平台中的 front-skill 执行下面的实施合同。
 严格遵守实施范围，分批实现，每批先检查实际 Diff 和验证结果。
 禁止提交、push、发布和部署。
 
@@ -84,7 +193,7 @@ front-skill/
 ### 单点修改
 
 ```text
-使用 $front-skill 做一个单点修改。
+调用当前平台中的 front-skill 做一个单点修改。
 仅修改以下文件和指定区域，禁止修改其他行为：
 
 文件：
@@ -100,7 +209,7 @@ front-skill/
 ### 审查当前 Diff
 
 ```text
-使用 $front-skill 审查当前工作区的实际 Diff。
+调用当前平台中的 front-skill 审查当前工作区的实际 Diff。
 本轮只审查，不修改。检查复用、范围、公共 API、编码、编译、测试和视觉结果。
 ```
 
