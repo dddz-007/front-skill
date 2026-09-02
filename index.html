@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>front-skill — 让 AI 安全修改已有前端项目</title>
+  <meta name="description" content="适用于 Codex、Claude Code、OpenCode、Cursor 和 Qoder 的前端 Agent Skill。要求 AI 先调查、优先复用、控制修改范围并验证后交付。">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown.min.css">
+  <style>
+    :root { color-scheme: light; }
+    body { margin: 0; background: #f6f8fa; }
+    .page { max-width: 980px; margin: 0 auto; padding: 48px 24px 80px; }
+    .markdown-body { box-sizing: border-box; min-width: 200px; padding: 36px 44px; background: #fff; border: 1px solid #d0d7de; border-radius: 12px; box-shadow: 0 12px 32px rgb(31 35 40 / 8%); }
+    .markdown-body h1:first-child { font-size: 2.4em; letter-spacing: -0.03em; }
+    .markdown-body blockquote { border-left-color: #16a34a; }
+    .markdown-body a { color: #15803d; }
+    .markdown-body pre { background: #111827; }
+    .error { color: #b42318; padding: 24px; text-align: center; }
+    @media (max-width: 700px) { .page { padding: 16px 10px 40px; } .markdown-body { padding: 24px 20px; border-radius: 8px; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article id="content" class="markdown-body" aria-live="polite">正在加载文档…</article>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+  <script>
+    const content = document.getElementById('content');
+    fetch('./README.md')
+      .then((response) => {
+        if (!response.ok) throw new Error(`README.md 加载失败（${response.status}）`);
+        return response.text();
+      })
+      .then((markdown) => {
+        content.innerHTML = marked.parse(markdown);
+        document.title = content.querySelector('h1')?.textContent + ' — Agent Skill' || document.title;
+      })
+      .catch((error) => {
+        content.innerHTML = `<div class="error">${error.message}<br>请直接查看 <a href="./README.md">README.md</a>。</div>`;
+      });
+  </script>
+</body>
+</html>
