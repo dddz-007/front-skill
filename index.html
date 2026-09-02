@@ -10,6 +10,9 @@
     :root { color-scheme: light; }
     body { margin: 0; background: #f6f8fa; }
     .page { max-width: 980px; margin: 0 auto; padding: 48px 24px 80px; }
+    .site-nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; font: 600 14px/1.4 system-ui, sans-serif; }
+    .site-nav a { color: #15803d; text-decoration: none; }
+    .site-nav a:hover { text-decoration: underline; }
     .markdown-body { box-sizing: border-box; min-width: 200px; padding: 36px 44px; background: #fff; border: 1px solid #d0d7de; border-radius: 12px; box-shadow: 0 12px 32px rgb(31 35 40 / 8%); }
     .markdown-body h1:first-child { font-size: 2.4em; letter-spacing: -0.03em; }
     .markdown-body blockquote { border-left-color: #16a34a; }
@@ -21,23 +24,101 @@
 </head>
 <body>
   <main class="page">
+    <nav class="site-nav" aria-label="文档导航">
+      <a href="./" data-home>front-skill</a>
+      <a href="https://github.com/dddz-007/front-skill">GitHub</a>
+    </nav>
     <article id="content" class="markdown-body" aria-live="polite">正在加载文档…</article>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
   <script>
     const content = document.getElementById('content');
-    fetch('./README.md')
-      .then((response) => {
-        if (!response.ok) throw new Error(`README.md 加载失败（${response.status}）`);
-        return response.text();
-      })
-      .then((markdown) => {
-        content.innerHTML = marked.parse(markdown);
-        document.title = content.querySelector('h1')?.textContent + ' — Agent Skill' || document.title;
-      })
-      .catch((error) => {
-        content.innerHTML = `<div class="error">${error.message}<br>请直接查看 <a href="./README.md">README.md</a>。</div>`;
+    const repositoryRoot = new URL('./', window.location.href);
+
+    function getRequestedDocument() {
+      const requested = new URLSearchParams(window.location.search).get('doc') || 'README.md';
+      const decoded = decodeURIComponent(requested).replaceAll('\\', '/');
+      const segments = decoded.split('/').filter(Boolean);
+      const isRenderable = decoded.toLowerCase().endsWith('.md') || decoded === 'LICENSE';
+      if (!isRenderable || segments.includes('..')) return 'README.md';
+      return segments.join('/');
+    }
+
+    function resolveMarkdownLink(href, currentDocument) {
+      const [path, hash = ''] = href.split('#', 2);
+      const isRenderable = path.toLowerCase().endsWith('.md') || path === 'LICENSE';
+      if (!isRenderable) return null;
+      const currentDirectory = currentDocument.includes('/')
+        ? currentDocument.slice(0, currentDocument.lastIndexOf('/') + 1)
+        : '';
+      const resolved = new URL(path, new URL(currentDirectory, repositoryRoot));
+      if (resolved.origin !== repositoryRoot.origin || !resolved.pathname.startsWith(repositoryRoot.pathname)) return null;
+      const documentPath = decodeURIComponent(resolved.pathname.slice(repositoryRoot.pathname.length));
+      const target = new URL(window.location.pathname, window.location.origin);
+      target.searchParams.set('doc', documentPath);
+      target.hash = hash ? `#${hash}` : '';
+      return target.pathname + target.search + target.hash;
+    }
+
+    function rewriteDocumentLinks(currentDocument) {
+      content.querySelectorAll('a[href]').forEach((link) => {
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || /^[a-z][a-zd+.-]*:/i.test(href)) return;
+        const routed = resolveMarkdownLink(href, currentDocument);
+        if (routed) link.setAttribute('href', routed);
       });
+    }
+
+    function addHeadingAnchors() {
+      const usedIds = new Map();
+      content.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((heading) => {
+        const baseId = heading.textContent
+          .trim()
+          .toLowerCase()
+          .replace(/[^\p{L}\p{N}\s-]/gu, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-');
+        const count = usedIds.get(baseId) || 0;
+        heading.id = count ? `${baseId}-${count}` : baseId;
+        usedIds.set(baseId, count + 1);
+      });
+    }
+
+    async function renderDocument({ updateHistory = false } = {}) {
+      const currentDocument = getRequestedDocument();
+      content.textContent = '正在加载文档…';
+      try {
+        const response = await fetch(new URL(currentDocument, repositoryRoot));
+        if (!response.ok) throw new Error(`${currentDocument} 加载失败（${response.status}）`);
+        let markdown = await response.text();
+        markdown = markdown.replace(/^---\s*\n[\s\S]*?\n---\s*\n/, '');
+        content.innerHTML = DOMPurify.sanitize(marked.parse(markdown));
+        addHeadingAnchors();
+        rewriteDocumentLinks(currentDocument);
+        const heading = content.querySelector('h1')?.textContent || 'front-skill';
+        document.title = `${heading} — Agent Skill`;
+        if (updateHistory) window.history.pushState({}, '', window.location.href);
+        if (window.location.hash) document.getElementById(decodeURIComponent(window.location.hash.slice(1)))?.scrollIntoView();
+        else window.scrollTo({ top: 0 });
+      } catch (error) {
+        content.innerHTML = '';
+        const message = document.createElement('div');
+        message.className = 'error';
+        message.textContent = error.message;
+        content.append(message);
+      }
+    }
+
+    document.addEventListener('click', (event) => {
+      const link = event.target.closest('a[href*="?doc="]');
+      if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      window.history.pushState({}, '', link.href);
+      renderDocument();
+    });
+    window.addEventListener('popstate', () => renderDocument());
+    renderDocument();
   </script>
 </body>
 </html>
