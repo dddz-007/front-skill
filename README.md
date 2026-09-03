@@ -155,18 +155,6 @@ front-skill/
 
 如果它帮你减少了一次误改或返工，欢迎点个 Star，并分享你的真实案例。
 
-## 发布到 GitHub Pages
-
-本仓库使用根目录单一文档源：`README.md` 负责内容，根目录 `index.html` 负责页面展示。无需维护 `docs/` 副本。
-
-```text
-Settings → Pages → Deploy from a branch → master → /(root)
-```
-
-以后只需修改根目录 Markdown 或页面入口并 push 到 `master`，Pages 会自动显示最新内容：
-
-https://dddz-007.github.io/front-skill/
-
 ## License
 
 [MIT](LICENSE)
